@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <el-card class="box-card">
     <div slot="header">
       <div class="title-box">
         <el-tooltip content="同步权限数据到后端" placement="top">
@@ -31,7 +31,7 @@
         </span>
       </span>
     </el-tree>
-  </div>
+  </el-card>
 </template>
 
 <script>
@@ -94,6 +94,7 @@ export default {
   },
 
   methods: {
+    generateTitle,
     refreshSyncedMenu() {
       getMenuPermissionData().then((response) => {
         this.syncMenu = response.data || []
@@ -114,7 +115,7 @@ export default {
           item.meta = item.children[0].meta
         }
         if (item.meta && item.meta.title) {
-          newVar.title = generateTitle(item.meta.title)
+          newVar.title = this.generateTitle(item.meta.title)
           newVar.name = newVar.name ? newVar.name : item.meta.title
         }
         if (item.children && item.children.length > 0) {
@@ -131,7 +132,7 @@ export default {
           'path': childenItem.path,
           'absolute_path': path.join('/', parentNode.path, childenItem.path),
           'name': typeof childenItem.name !== undefined ? childenItem.name : '',
-          'title': (childenItem.meta && childenItem.meta.title) ? generateTitle(childenItem.meta.title) : ''
+          'title': (childenItem.meta && childenItem.meta.title) ? this.generateTitle(childenItem.meta.title) : ''
         }
         if (childenItem.children) {
           newChilden.children = this.getChildren(childenItem.children, newChilden)
