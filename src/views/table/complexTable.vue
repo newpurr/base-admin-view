@@ -194,7 +194,7 @@ export default {
         status: 'published'
       },
       dialogFormVisible: false,
-      dialogStatus: '',
+      dialogType: '',
       textMap: {
         update: 'Edit',
         create: 'Create'

@@ -1,37 +1,40 @@
 <template>
-  <el-card class="box-card">
-    <div slot="header">
-      <div class="title-box">
-        <el-tooltip content="同步权限数据到后端" placement="top">
-          <el-button type="primary" size="mini" round @click="SyncMenuPermissionData">同步数据</el-button>
-        </el-tooltip>
-        <el-tooltip content="分配权限" placement="top">
-          <el-button type="success" size="mini" round @click="assignPermissions">分配权限</el-button>
-        </el-tooltip>
+  <div>
+    <el-card class="box-card">
+      <div slot="header">
+        <div class="title-box">
+          <el-tooltip content="同步权限数据到后端" placement="top">
+            <el-button type="primary" size="mini" round @click="SyncMenuPermissionData">同步数据</el-button>
+          </el-tooltip>
+          <el-tooltip content="分配权限" placement="top">
+            <el-button type="success" size="mini" round @click="assignPermissions">分配权限</el-button>
+          </el-tooltip>
+        </div>
       </div>
-    </div>
-    <el-input v-model="filterMenuPermText" class="mgb-15" placeholder="筛选菜单"/>
-    <el-tree
-      ref="menuPermTreeRef"
-      :data="menuTree"
-      :props="treeProps"
-      :expand-on-click-node="false"
-      :filter-node-method="filterNode"
-      :default-checked-keys="permission"
-      node-key="absolute_path"
-      highlight-current
-      default-expand-all
-      show-checkbox>
-      <span slot-scope="{ node, data }" class="custom-tree-node">
-        <span>
-          <span class="mgl-10">{{ data.title }}</span>
-          <!--<span class="mgl-10 tips-text">{{ data.path }}</span>-->
-          <el-tag class="mgl-10" type="success" size="mini">菜单</el-tag>
-          <el-tag v-if="syncMenu.indexOf(data.absolute_path) === -1" class="mgl-10" type="danger" size="mini">未同步</el-tag>
+      <el-input v-model="filterMenuPermText" class="mgb-15" placeholder="筛选菜单"/>
+      <el-tree
+        ref="menuPermTreeRef"
+        :data="menuTree"
+        :props="treeProps"
+        :expand-on-click-node="false"
+        :filter-node-method="filterNode"
+        :default-checked-keys="permission"
+        node-key="absolute_path"
+        highlight-current
+        default-expand-all
+        show-checkbox>
+        <span slot-scope="{ node, data }" class="custom-tree-node">
+          <span>
+            <span class="mgl-10">{{ data.title }}</span>
+            <!--<span class="mgl-10 tips-text">{{ data.path }}</span>-->
+            <el-tag class="mgl-10" type="success" size="mini">菜单</el-tag>
+            <el-tag v-if="syncMenu.indexOf(data.absolute_path) === -1" class="mgl-10" type="danger" size="mini">未同步</el-tag>
+          </span>
         </span>
-      </span>
-    </el-tree>
-  </el-card>
+      </el-tree>
+      <permission-add :parent-object="{'path': '/test'}" :dialog-visible="dialogVisible" dialog-type="add" business-type="BUTTON"/>
+    </el-card>
+  </div>
 </template>
 
 <script>
@@ -42,9 +45,10 @@ import { initializePermission } from '@/utils/permission'
 import path from 'path'
 import debounce from 'lodash/debounce'
 import { mapGetters } from 'vuex'
-
+import PermissionAdd from './add'
 export default {
   name: 'Permission',
+  components: { PermissionAdd },
   props: {
     // 业务类型 1-角色 2-用户
     businessType: {
@@ -66,7 +70,8 @@ export default {
         children: 'children'
       },
       syncMenu: [],
-      filterMenuPermText: ''
+      filterMenuPermText: '',
+      dialogVisible: false
     }
   },
   computed: {
