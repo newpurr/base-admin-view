@@ -29,10 +29,20 @@
             <!--<span class="mgl-10 tips-text">{{ data.path }}</span>-->
             <el-tag class="mgl-10" type="success" size="mini">菜单</el-tag>
             <el-tag v-if="syncMenu.indexOf(data.absolute_path) === -1" class="mgl-10" type="danger" size="mini">未同步</el-tag>
+            <!--<el-badge :visible.sync="syncMenu.indexOf(data.absolute_path) === -1" is-dot class="item">数据查询</el-badge>-->
+            <el-tooltip content="添加按钮权限" placement="top">
+              <el-button type="text" size="mini" icon="el-icon-plus" @click="showdialog('add', data, 'BUTTON')"/>
+            </el-tooltip>
+            <el-tooltip content="更新" placement="top">
+              <el-button class="update-btn" type="text" size="mini" icon="el-icon-edit"/>
+            </el-tooltip>
+            <el-tooltip content="删除" placement="top">
+              <el-button class="delete-btn" type="text" size="mini" icon="el-icon-delete"/>
+            </el-tooltip>
           </span>
         </span>
       </el-tree>
-      <permission-add :parent-object="{'path': '/test'}" :dialog-visible="dialogVisible" dialog-type="add" business-type="BUTTON"/>
+      <permission-add :parent-object="dialog.leaf" :dialog-visible.sync="dialog.visible" :dialog-type="dialog.type" :business-type="dialog.businessType"/>
     </el-card>
   </div>
 </template>
@@ -46,6 +56,7 @@ import path from 'path'
 import debounce from 'lodash/debounce'
 import { mapGetters } from 'vuex'
 import PermissionAdd from './add'
+
 export default {
   name: 'Permission',
   components: { PermissionAdd },
@@ -71,7 +82,12 @@ export default {
       },
       syncMenu: [],
       filterMenuPermText: '',
-      dialogVisible: false
+      dialog: {
+        visible: false,
+        type: 'add',
+        leaf: {},
+        businessType: 'BUTTON'
+      }
     }
   },
   computed: {
@@ -94,11 +110,18 @@ export default {
       'absolute_path': '/',
       'name': '根对象',
       'title': '根对象',
+      'per_type': 2,
       'children': this.generateMenuTree()
     }]
   },
 
   methods: {
+    showdialog(type, parentLeaf, businessType) {
+      this.dialog.visible = true
+      this.dialog.type = type
+      this.dialog.businessType = businessType
+      this.dialog.leaf = parentLeaf
+    },
     generateTitle,
     refreshSyncedMenu() {
       getMenuPermissionData().then((response) => {
@@ -114,6 +137,7 @@ export default {
         const newVar = {
           'path': item.path,
           'absolute_path': item.path,
+          'per_type': 2,
           'name': item.name
         }
         if ((!item.meta || !item.meta.title) && item.children && item.children.length === 1) {
@@ -136,6 +160,7 @@ export default {
         const newChilden = {
           'path': childenItem.path,
           'absolute_path': path.join('/', parentNode.path, childenItem.path),
+          'per_type': 2,
           'name': typeof childenItem.name !== undefined ? childenItem.name : '',
           'title': (childenItem.meta && childenItem.meta.title) ? this.generateTitle(childenItem.meta.title) : ''
         }
@@ -191,6 +216,7 @@ export default {
         font-size: 14px;
         padding-right: 8px;
     }
+
     .mgb-15 {
         margin-bottom: 15px;
     }

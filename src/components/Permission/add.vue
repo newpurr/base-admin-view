@@ -1,7 +1,7 @@
 <template>
   <!--弹窗：新增或编辑权限-->
   <!--:visible.sync="dialogFormVisible"-->
-  <el-dialog :title="textMap[dialogType+'Button']" :visible.sync="showDialog" width="30%">
+  <el-dialog :title="textMap[dialogType+'Button']" :visible.sync="visible" width="30%">
     <el-form ref="dataForm" :rules="rules" :model="temp" label-position="top">
       <el-form-item label="权限名" prop="name">
         <el-input v-model="temp.name" placeholder="例如：用户管理、添加用户"/>
@@ -9,11 +9,11 @@
       <el-form-item label="权限值" prop="path">
         <el-input v-model="temp.path" :disabled="dialogType==constDialogType.UPDATE"/>
       </el-form-item>
-      <el-form-item label="父级权限值" prop="path">
-        <el-input v-model="temp.parent.path" :disabled="true"/>
+      <el-form-item label="父级权限值" prop="absolute_path">
+        <el-input :value="temp.parent.absolute_path" :readonly="true"/>
       </el-form-item>
       <el-form-item label="权限类型" prop="per_type">
-        <el-select v-model="temp.per_type">
+        <el-select v-model="temp.per_type" :disabled="true">
           <el-option
             v-for="item in permType"
             :key="item.code"
@@ -23,7 +23,7 @@
       </el-form-item>
     </el-form>
     <div slot="footer" class="dialog-footer">
-      <el-button @click="showDialog = false">取消</el-button>
+      <el-button @click="visible = false">取消</el-button>
       <el-button v-if="dialogType===constDialogType.ADD" type="primary" @click="add">确定</el-button>
       <el-button v-else-if="dialogType===constDialogType.ADD" type="primary" @click="update">确定</el-button>
     </div>
@@ -57,6 +57,17 @@ export default {
     parentObject: {
       type: Object,
       default: () => {
+        return {
+          absolute_path: '',
+          name: '',
+          path: '',
+          title: ''
+        }
+      }
+    },
+    currentObject: {
+      type: Object,
+      default: () => {
         return {}
       }
     },
@@ -67,10 +78,8 @@ export default {
   },
   data() {
     return {
-      showDialog: this.dialogVisible,
       permType,
       constDialogType,
-      dialogFormVisible: false,
       textMap: {
         addButton: '添加权限',
         updateButton: '更新权限',
@@ -91,6 +100,16 @@ export default {
       }
     }
   },
+  computed: {
+    visible: {
+      get() {
+        return this.dialogVisible
+      },
+      set(newVal) {
+        this.$emit('update:dialogVisible', newVal)
+      }
+    }
+  },
   watch: {
     'parentObject': function(val) {
       this.temp.parent = val
@@ -99,9 +118,13 @@ export default {
       // }
       // this.$nextTick(() => this.$refs['dataForm'].clearValidate())
     },
-    'dialogVisible': function(val) {
-      this.showDialog = val
-    },
+    // 'dialogVisible': function(val) {
+    //   this.showDialog = val
+    // },
+    // 'showDialog': function(val) {
+    //   this.$nextTick(() => this.$refs['dataForm'].clearValidate())
+    //   this.$emit('show_dialog_change', val)
+    // },
     'businessType': function(val) {
       console.log(val)
       // for (const key in this.temp) {
