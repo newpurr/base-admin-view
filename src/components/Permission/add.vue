@@ -1,7 +1,7 @@
 <template>
   <!--弹窗：新增或编辑权限-->
   <!--:visible.sync="dialogFormVisible"-->
-  <el-dialog :title="textMap[dialogType+'Button']" :visible.sync="visible" width="30%">
+  <el-dialog :title="titleName" :visible.sync="visible" width="30%">
     <el-form ref="dataForm" :rules="rules" :model="temp" label-position="top">
       <el-form-item label="权限名" prop="name">
         <el-input v-model="temp.name" placeholder="例如：用户管理、添加用户"/>
@@ -10,7 +10,7 @@
         <el-input v-model="temp.path" :disabled="dialogType==constDialogType.UPDATE"/>
       </el-form-item>
       <el-form-item label="父级权限值" prop="absolute_path">
-        <el-input :value="temp.parent.absolute_path" :readonly="true"/>
+        <el-input :value="currentNode.parent.data.absolute_path" :readonly="true"/>
       </el-form-item>
       <el-form-item label="权限类型" prop="per_type">
         <el-select v-model="temp.per_type" :disabled="true">
@@ -31,6 +31,8 @@
 </template>
 
 <script>
+import path from 'path'
+
 const permType = {
   BUTTON: { code: 3, name: '按钮' },
   MENU: { code: 2, name: '菜单' },
@@ -54,21 +56,19 @@ export default {
       type: String,
       default: permType.BUTTON.code
     },
-    parentObject: {
+    currentNode: {
       type: Object,
       default: () => {
         return {
-          absolute_path: '',
-          name: '',
-          path: '',
-          title: ''
+          'data': {
+            absolute_path: '',
+            name: '',
+            path: '',
+            title: '',
+            parent: {}
+          },
+          'parent': {}
         }
-      }
-    },
-    currentObject: {
-      type: Object,
-      default: () => {
-        return {}
       }
     },
     dialogVisible: {
@@ -86,12 +86,9 @@ export default {
         deleteButton: '删除权限'
       },
       temp: {
-        idx: null,
-        pid: null,
-        name: null,
+        name: this.currentNode.data.name,
         per_type: permType[this.businessType].code,
-        path: null,
-        parent: this.parentObject
+        path: this.currentNode.data.absolute_path
       },
       rules: {
         name: [{ required: true, message: '必填', trigger: 'blur' }],
@@ -108,16 +105,14 @@ export default {
       set(newVal) {
         this.$emit('update:dialogVisible', newVal)
       }
+    },
+    titleName() {
+      console.log(this.dialogType + 'Button')
+      console.log(this.textMap)
+      return this.textMap[this.dialogType + 'Button']
     }
   },
   watch: {
-    'parentObject': function(val) {
-      this.temp.parent = val
-      // for (const key in this.temp) {
-      //   this.temp[key] = null
-      // }
-      // this.$nextTick(() => this.$refs['dataForm'].clearValidate())
-    },
     // 'dialogVisible': function(val) {
     //   this.showDialog = val
     // },
@@ -143,8 +138,11 @@ export default {
     add() {
       this.$refs['dataForm'].validate((valid) => {
         if (!valid) return
-        const data = Object.assign({}, this.temp)// copy obj
-        console.log(data)
+        const data = Object.assign({}, this.temp)
+        data.title = data.name
+        data.absolute_path = path.join('/', this.currentNode.data.absolute_path, data.path)
+        this.$parent.$refs.menuPermTreeRef.append(data, this.currentNode)
+        // this.$emit('update:dialog.node', tempNode)
       })
     },
     update() {

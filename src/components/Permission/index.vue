@@ -20,30 +20,39 @@
         :filter-node-method="filterNode"
         :default-checked-keys="permission"
         node-key="absolute_path"
-        highlight-current
         default-expand-all
         show-checkbox>
         <span slot-scope="{ node, data }" class="custom-tree-node">
-          <span>
-            <span class="mgl-10">{{ data.title }}</span>
-            <!--<span class="mgl-10 tips-text">{{ data.path }}</span>-->
-            <el-tag class="mgl-10" type="success" size="mini">菜单</el-tag>
+          <span class="mgl-10">
+            {{ data.title }}
+            <el-tooltip content="菜:指代菜单,钮:指代按钮" placement="top">
+              <el-tag v-if="data.per_type == 2" class="mgl-10" type="success" size="mini">菜</el-tag>
+              <el-tag v-else-if="data.per_type == 3" class="mgl-10" type="success" size="mini">钮</el-tag>
+            </el-tooltip>
             <el-tag v-if="syncMenu.indexOf(data.absolute_path) === -1" class="mgl-10" type="danger" size="mini">未同步</el-tag>
-            <!--<el-badge :visible.sync="syncMenu.indexOf(data.absolute_path) === -1" is-dot class="item">数据查询</el-badge>-->
-            <el-tooltip content="添加按钮权限" placement="top">
-              <el-button type="text" size="mini" icon="el-icon-plus" @click="showdialog('add', data, 'BUTTON')"/>
-            </el-tooltip>
-            <el-tooltip content="更新" placement="top">
-              <el-button class="update-btn" type="text" size="mini" icon="el-icon-edit"/>
-            </el-tooltip>
-            <el-tooltip content="删除" placement="top">
-              <el-button class="delete-btn" type="text" size="mini" icon="el-icon-delete"/>
-            </el-tooltip>
+          </span>
+          <span class="mgl-10">
+            <el-dropdown>
+              <span class="el-dropdown-link">
+                <i class="el-icon-caret-bottom el-icon--right"/>
+              </span>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item>
+                  <el-button type="text" size="mini" icon="el-icon-plus" @click="showdialog('add', node, 'BUTTON')"/>
+                </el-dropdown-item>
+                <el-dropdown-item>
+                  <el-button class="update-btn" type="text" size="mini" icon="el-icon-edit"/>
+                </el-dropdown-item>
+                <el-dropdown-item>
+                  <el-button class="delete-btn" type="text" size="mini" icon="el-icon-delete"/>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
           </span>
         </span>
       </el-tree>
-      <permission-add :parent-object="dialog.leaf" :dialog-visible.sync="dialog.visible" :dialog-type="dialog.type" :business-type="dialog.businessType"/>
     </el-card>
+    <permission-add v-if="dialog.visible" :current-node="dialog.node" :dialog-visible.sync="dialog.visible" :dialog-type="dialog.type" :business-type="dialog.businessType"/>
   </div>
 </template>
 
@@ -85,7 +94,7 @@ export default {
       dialog: {
         visible: false,
         type: 'add',
-        leaf: {},
+        node: {},
         businessType: 'BUTTON'
       }
     }
@@ -116,11 +125,11 @@ export default {
   },
 
   methods: {
-    showdialog(type, parentLeaf, businessType) {
+    showdialog(type, node, businessType) {
       this.dialog.visible = true
       this.dialog.type = type
+      this.dialog.node = node
       this.dialog.businessType = businessType
-      this.dialog.leaf = parentLeaf
     },
     generateTitle,
     refreshSyncedMenu() {
