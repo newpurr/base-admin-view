@@ -7,7 +7,7 @@
         <el-input v-model="temp.name" placeholder="例如：用户管理、添加用户"/>
       </el-form-item>
       <el-form-item label="权限值" prop="path">
-        <el-input v-model="temp.path" :disabled="dialogType==constDialogType.UPDATE"/>
+        <el-input v-model="temp.path" :disabled="dialogType===constDialogType.UPDATE"/>
       </el-form-item>
       <el-form-item label="父级权限值" prop="absolute_path">
         <el-input :value="currentNode.parent.data.absolute_path" :readonly="true"/>
@@ -112,37 +112,15 @@ export default {
       return this.textMap[this.dialogType + 'Button']
     }
   },
-  watch: {
-    // 'dialogVisible': function(val) {
-    //   this.showDialog = val
-    // },
-    // 'showDialog': function(val) {
-    //   this.$nextTick(() => this.$refs['dataForm'].clearValidate())
-    //   this.$emit('show_dialog_change', val)
-    // },
-    'businessType': function(val) {
-      console.log(val)
-      // for (const key in this.temp) {
-      //   this.temp[key] = null
-      // }
-      // this.$nextTick(() => this.$refs['dataForm'].clearValidate())
-    },
-    'dialogType': function(val) {
-      // for (const key in this.temp) {
-      //   this.temp[key] = null
-      // }
-      // this.$nextTick(() => this.$refs['dataForm'].clearValidate())
-    }
-  },
   methods: {
     add() {
       this.$refs['dataForm'].validate((valid) => {
         if (!valid) return
-        const data = Object.assign({}, this.temp)
-        data.title = data.name
-        data.absolute_path = path.join('/', this.currentNode.data.absolute_path, data.path)
-        this.$parent.$refs.menuPermTreeRef.append(data, this.currentNode)
-        // this.$emit('update:dialog.node', tempNode)
+        const childNode = Object.assign({}, this.temp)
+        childNode.title = childNode.name
+        childNode.absolute_path = path.join('/', this.currentNode.data.absolute_path, childNode.path)
+
+        this.$parent.$refs.menuPermTreeRef.append(childNode, this.currentNode)
       })
     },
     update() {

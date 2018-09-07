@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="loading">
     <el-card class="box-card">
       <div slot="header">
         <div class="title-box">
@@ -26,8 +26,8 @@
           <span class="mgl-10">
             {{ data.title }}
             <el-tooltip content="菜:指代菜单,钮:指代按钮" placement="top">
-              <el-tag v-if="data.per_type == 2" class="mgl-10" type="success" size="mini">菜</el-tag>
-              <el-tag v-else-if="data.per_type == 3" class="mgl-10" type="success" size="mini">钮</el-tag>
+              <el-tag v-if="data.per_type === 2" class="mgl-10" type="success" size="mini">菜</el-tag>
+              <el-tag v-else-if="data.per_type === 3" class="mgl-10" type="success" size="mini">钮</el-tag>
             </el-tooltip>
             <el-tag v-if="syncMenu.indexOf(data.absolute_path) === -1" class="mgl-10" type="danger" size="mini">未同步</el-tag>
           </span>
@@ -59,7 +59,7 @@
 <script>
 import { generateTitle } from '@/utils/i18n'
 import { asyncRouterMap } from '@/router'
-import { SyncMenuPermissionData, getMenuPermissionData, assignRolePermissions } from '@/api/rbac'
+import { SyncMenuPermissionData, getMenuPermissionData, assignRolePermissions, getRoleButtons } from '@/api/rbac'
 import { initializePermission } from '@/utils/permission'
 import path from 'path'
 import debounce from 'lodash/debounce'
@@ -85,18 +85,23 @@ export default {
     return {
       // 菜单权限树
       menuTree: [],
+      //  element树参数
       treeProps: {
         label: 'title',
         children: 'children'
       },
+      //  已同步的信息
       syncMenu: [],
+      //  按父级分组的按钮字典
+      buttonMap: [],
       filterMenuPermText: '',
       dialog: {
         visible: false,
         type: 'add',
         node: {},
         businessType: 'BUTTON'
-      }
+      },
+      loading: true
     }
   },
   computed: {
@@ -111,17 +116,16 @@ export default {
     }, 600)
   },
 
-  created() {
-    this.refreshSyncedMenu()
+  async created() {
+    let response = await getRoleButtons(1)
+    this.buttonMap = response.data || {}
 
-    this.menuTree = [{
-      'path': '/',
-      'absolute_path': '/',
-      'name': '根对象',
-      'title': '根对象',
-      'per_type': 2,
-      'children': this.generateMenuTree()
-    }]
+    response = await this.refreshSyncedMenu()
+    this.syncMenu = response.data || []
+
+    this.generateMenuTree()
+
+    this.loading = false
   },
 
   methods: {
@@ -133,38 +137,29 @@ export default {
     },
     generateTitle,
     refreshSyncedMenu() {
-      getMenuPermissionData().then((response) => {
-        this.syncMenu = response.data || []
-      })
+      return getMenuPermissionData()
     },
     filterNode(value, data) {
       if (!value) return true
       return data.name.indexOf(value) !== -1 || data.path.indexOf(value) !== -1 || data.title.indexOf(value) !== -1
     },
     generateMenuTree() {
-      return asyncRouterMap.map((item, index) => {
-        const newVar = {
-          'path': item.path,
-          'absolute_path': item.path,
-          'per_type': 2,
-          'name': item.name
-        }
-        if ((!item.meta || !item.meta.title) && item.children && item.children.length === 1) {
-          item.meta = item.children[0].meta
-        }
-        if (item.meta && item.meta.title) {
-          newVar.title = this.generateTitle(item.meta.title)
-          newVar.name = newVar.name ? newVar.name : item.meta.title
-        }
-        if (item.children && item.children.length > 0) {
-          newVar.children = this.getChildren(item.children, newVar)
-        }
-        return newVar
-      }).filter(item => {
-        return item.path !== '*' || item.alwaysShow
-      })
+      this.menuTree = [{
+        'path': '/',
+        'absolute_path': '/',
+        'name': '根对象',
+        'title': '根对象',
+        'per_type': 2,
+        'children': this.getChildren(asyncRouterMap, { 'path': '/' }).filter(item => {
+          return item.path !== '*' || item.alwaysShow
+        })
+      }]
     },
     getChildren(childrens, parentNode) {
+      if (!childrens) {
+        return []
+      }
+
       return childrens.map((childenItem) => {
         const newChilden = {
           'path': childenItem.path,
@@ -173,8 +168,20 @@ export default {
           'name': typeof childenItem.name !== undefined ? childenItem.name : '',
           'title': (childenItem.meta && childenItem.meta.title) ? this.generateTitle(childenItem.meta.title) : ''
         }
-        if (childenItem.children) {
+        if (childenItem.children && childenItem.children.length > 0) {
           newChilden.children = this.getChildren(childenItem.children, newChilden)
+
+          //  按钮
+          if (this.buttonMap.hasOwnProperty(newChilden.absolute_path)) {
+            const tempButton = this.buttonMap[newChilden.absolute_path]
+            newChilden.children.push({
+              'path': tempButton.path,
+              'absolute_path': tempButton.path,
+              'per_type': 3,
+              'name': tempButton.name,
+              'title': tempButton.name
+            })
+          }
         }
         return newChilden
       })
