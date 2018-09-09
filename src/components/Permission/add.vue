@@ -7,7 +7,7 @@
         <el-input v-model="temp.name" placeholder="例如：用户管理、添加用户"/>
       </el-form-item>
       <el-form-item label="权限值" prop="path">
-        <el-input v-model="temp.path" :disabled="dialogType===constDialogType.UPDATE"/>
+        <el-input v-model="temp.path" :disabled="dialogType===constDialogType.UPDATE" placeholder="例如：/test"/>
       </el-form-item>
       <el-form-item label="父级权限值" prop="absolute_path">
         <el-input :value="currentNode.parent.data.absolute_path" :readonly="true"/>
@@ -34,9 +34,8 @@
 import path from 'path'
 
 const permType = {
-  BUTTON: { code: 3, name: '按钮' },
-  MENU: { code: 2, name: '菜单' },
-  API: { code: 1, name: '接口' }
+  BUTTON: { code: 3, name: '按钮', type: 'BUTTON' },
+  API: { code: 1, name: '接口', type: 'API' }
 }
 
 const constDialogType = {
@@ -82,13 +81,12 @@ export default {
       constDialogType,
       textMap: {
         addButton: '添加权限',
-        updateButton: '更新权限',
-        deleteButton: '删除权限'
+        updateButton: '更新权限'
       },
       temp: {
-        name: this.currentNode.data.name,
+        name: this.dialogType === constDialogType.ADD ? '' : this.currentNode.data.name,
         per_type: permType[this.businessType].code,
-        path: this.currentNode.data.absolute_path
+        path: this.dialogType === constDialogType.ADD ? '' : this.currentNode.data.absolute_path
       },
       rules: {
         name: [{ required: true, message: '必填', trigger: 'blur' }],
@@ -107,20 +105,22 @@ export default {
       }
     },
     titleName() {
-      console.log(this.dialogType + 'Button')
-      console.log(this.textMap)
       return this.textMap[this.dialogType + 'Button']
     }
   },
   methods: {
     add() {
+      // if (this.currentNode.childNodes.length === 0) {
+      //   this.currentNode.
+      // }
       this.$refs['dataForm'].validate((valid) => {
         if (!valid) return
         const childNode = Object.assign({}, this.temp)
         childNode.title = childNode.name
-        childNode.absolute_path = path.join('/', this.currentNode.data.absolute_path, childNode.path)
+        childNode.absolute_path = `${this.permType[this.businessType].type}:` + path.join('/', this.currentNode.data.absolute_path, childNode.path)
 
         this.$parent.$refs.menuPermTreeRef.append(childNode, this.currentNode)
+        this.visible = false
       })
     },
     update() {

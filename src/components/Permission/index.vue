@@ -32,22 +32,8 @@
             <el-tag v-if="syncMenu.indexOf(data.absolute_path) === -1" class="mgl-10" type="danger" size="mini">未同步</el-tag>
           </span>
           <span class="mgl-10">
-            <el-dropdown>
-              <span class="el-dropdown-link">
-                <i class="el-icon-caret-bottom el-icon--right"/>
-              </span>
-              <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item>
-                  <el-button type="text" size="mini" icon="el-icon-plus" @click="showdialog('add', node, 'BUTTON')"/>
-                </el-dropdown-item>
-                <el-dropdown-item>
-                  <el-button class="update-btn" type="text" size="mini" icon="el-icon-edit"/>
-                </el-dropdown-item>
-                <el-dropdown-item>
-                  <el-button class="delete-btn" type="text" size="mini" icon="el-icon-delete"/>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </el-dropdown>
+            <el-button v-if="data.per_type === 2" type="text" size="mini" icon="el-icon-plus" @click="showdialog('add', node, 'BUTTON')"/>
+            <el-button v-if="data.per_type === 3 && syncMenu.indexOf(data.absolute_path) !== -1" class="delete-btn" type="text" size="mini" icon="el-icon-delete" @click="deletePermission(node)"/>
           </span>
         </span>
       </el-tree>
@@ -59,7 +45,7 @@
 <script>
 import { generateTitle } from '@/utils/i18n'
 import { asyncRouterMap } from '@/router'
-import { SyncMenuPermissionData, getMenuPermissionData, assignRolePermissions, getRoleButtons } from '@/api/rbac'
+import { SyncMenuPermissionData, getMenuPermissionData, assignRolePermissions, getButtons, deletePermission } from '@/api/rbac'
 import { initializePermission } from '@/utils/permission'
 import path from 'path'
 import debounce from 'lodash/debounce'
@@ -116,19 +102,23 @@ export default {
     }, 600)
   },
 
-  async created() {
-    let response = await getRoleButtons(1)
-    this.buttonMap = response.data || {}
-
-    response = await this.refreshSyncedMenu()
-    this.syncMenu = response.data || []
-
-    this.generateMenuTree()
-
-    this.loading = false
+  created() {
+    this.init()
   },
 
   methods: {
+    async init() {
+      this.loading = true
+      let response = await getButtons()
+      this.buttonMap = response.data || {}
+
+      response = await getMenuPermissionData()
+      this.syncMenu = response.data || []
+
+      this.generateMenuTree()
+
+      this.loading = false
+    },
     showdialog(type, node, businessType) {
       this.dialog.visible = true
       this.dialog.type = type
@@ -136,9 +126,6 @@ export default {
       this.dialog.businessType = businessType
     },
     generateTitle,
-    refreshSyncedMenu() {
-      return getMenuPermissionData()
-    },
     filterNode(value, data) {
       if (!value) return true
       return data.name.indexOf(value) !== -1 || data.path.indexOf(value) !== -1 || data.title.indexOf(value) !== -1
@@ -168,33 +155,39 @@ export default {
           'name': typeof childenItem.name !== undefined ? childenItem.name : '',
           'title': (childenItem.meta && childenItem.meta.title) ? this.generateTitle(childenItem.meta.title) : ''
         }
+
+        newChilden.children = newChilden.children || []
         if (childenItem.children && childenItem.children.length > 0) {
           newChilden.children = this.getChildren(childenItem.children, newChilden)
+        }
 
-          //  按钮
-          if (this.buttonMap.hasOwnProperty(newChilden.absolute_path)) {
-            const tempButton = this.buttonMap[newChilden.absolute_path]
+        //  按钮
+        if (this.buttonMap[newChilden.absolute_path]) {
+          const tempButtonArr = this.buttonMap[newChilden.absolute_path]
+          tempButtonArr.map((tempButton) => {
             newChilden.children.push({
               'path': tempButton.path,
+              'id': tempButton.id,
               'absolute_path': tempButton.path,
               'per_type': 3,
               'name': tempButton.name,
               'title': tempButton.name
             })
-          }
+          })
         }
         return newChilden
       })
     },
     // 同步路由到后端
-    SyncMenuPermissionData() {
-      const menus = this.menuTree
-      SyncMenuPermissionData({ 'menus': menus }).then((result) => {
-        this.refreshSyncedMenu()
-        this.$message({
-          message: '恭喜你，同步成功',
-          type: 'success'
-        })
+    async SyncMenuPermissionData() {
+      await SyncMenuPermissionData({ 'menus': this.menuTree })
+
+      const response = await getMenuPermissionData()
+      this.syncMenu = response.data || []
+
+      this.$message({
+        message: '恭喜你，同步成功',
+        type: 'success'
       })
     },
     // 分配权限
@@ -218,6 +211,18 @@ export default {
           type: 'success'
         })
       }
+    },
+    deletePermission(node) {
+      this.$confirm(`确认删除按钮【${node.data.name}】?`)
+        .then(() => {
+          return deletePermission(node.data.id)
+        }).then(() => {
+          this.init()
+          this.$message({
+            message: '删除成功',
+            type: 'success'
+          })
+        })
     }
   }
 }
