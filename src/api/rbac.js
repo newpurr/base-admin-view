@@ -32,3 +32,7 @@ export function getRoleButtons(roleid) {
 export function getButtons() {
   return request.get(`http://admin.base.com/api/button`)
 }
+
+export function getRoles(params) {
+  return request.get('http://admin.base.com/api/roles', params)
+}

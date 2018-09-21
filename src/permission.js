@@ -38,7 +38,7 @@ router.beforeEach((to, from, next) => {
   }
 
   if (!getToken()) {
-    next('/login')
+    next(`/login?redirect=${to.path}`)
     NProgress.done()
     return
   }
@@ -49,7 +49,11 @@ router.beforeEach((to, from, next) => {
     return
   }
 
-  if (hasPermission(to.path)) {
+  let toPath = to.path
+  if (to.matched && to.matched.length > 0) {
+    toPath = to.matched[to.matched.length - 1].path
+  }
+  if (hasPermission(toPath)) {
     next()
   } else {
     next({ path: '/401', replace: true, query: { noGoBack: true }})

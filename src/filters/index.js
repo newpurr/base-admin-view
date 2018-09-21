@@ -40,3 +40,11 @@ export function numberFormatter(num, digits) {
 export function toThousandslsFilter(num) {
   return (+num || 0).toString().replace(/^-?\d+/g, m => m.replace(/(?=(?!\b)(\d{3})+$)/g, ','))
 }
+
+export function enableStatusName(enable) {
+  const nameMap = {
+    0: '禁用',
+    1: '启用'
+  }
+  return nameMap[enable] ? nameMap[enable] : '未知'
+}
