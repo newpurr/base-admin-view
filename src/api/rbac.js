@@ -33,6 +33,18 @@ export function getButtons() {
   return request.get(`http://admin.base.com/api/button`)
 }
 
-export function getRoles(params) {
-  return request.get('http://admin.base.com/api/roles', params)
+export function getRoles(param) {
+  return request.get('http://admin.base.com/api/roles', { params: param })
+}
+
+export function createRole(param) {
+  return request.post(`http://admin.base.com/api/roles`, param)
+}
+
+export function updateRole(id, param) {
+  return request.put(`http://admin.base.com/api/roles/${id}`, param)
+}
+
+export function getRole(id) {
+  return request.get(`http://admin.base.com/api/roles/${id}`)
 }

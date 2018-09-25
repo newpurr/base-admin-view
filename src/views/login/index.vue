@@ -67,8 +67,7 @@ import { isvalidUsername } from '@/utils/validate'
 import LangSelect from '@/components/LangSelect'
 import SocialSign from './socialsignin'
 import { getRolePermissions } from '@/api/rbac'
-import store from '@/store'
-import router from '@/router'
+// import router from '@/router'
 
 export default {
   name: 'Login',
@@ -128,14 +127,10 @@ export default {
             getRolePermissions(1).then(response => {
               return this.$store.dispatch('setUserPermission', response.data.permission_list)
             })
-              // 初始化路由
-              .then(() => {
-                store.dispatch('GenerateRoutes', {})
-              })
               // 初始化vue异步route
               .then(() => {
-                console.log(store.getters.addRouters)
-                router.addRoutes(store.getters.addRouters) // 动态添加可访问路由表
+                console.log(this.$store.getters.addRouters)
+                // router.addRoutes(this.$store.getters.addRouters) // 动态添加可访问路由表
               })
               // 结束
               .then(() => {

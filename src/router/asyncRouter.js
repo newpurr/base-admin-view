@@ -33,20 +33,6 @@ export default [
     },
     children: [
       {
-        path: 'create',
-        component: () => import('@/views/role/create'),
-        name: 'createRole',
-        meta: { title: 'createRole', icon: 'edit' },
-        hidden: true
-      },
-      {
-        path: 'edit/:id(\\d+)',
-        component: () => import('@/views/role/edit'),
-        name: 'editRole',
-        meta: { title: 'editRole', noCache: true },
-        hidden: true
-      },
-      {
         path: 'list',
         component: () => import('@/views/role/list'),
         name: 'roleList',

@@ -1,6 +1,6 @@
 import store from '@/store'
 import { getRolePermissions } from '@/api/rbac'
-import { asyncRouterMap } from '@/router'
+import { asyncRouterMap, constantRouterMap } from '@/router'
 import path from 'path'
 
 /**
@@ -13,11 +13,9 @@ export default function checkPermission(value) {
     const roles = store.getters && store.getters.roles
     const permissionRoles = value
 
-    const hasPermission = roles.some(role => {
+    return roles.some(role => {
       return permissionRoles.includes(role)
     })
-
-    return hasPermission
   } else {
     console.error(`need roles! Like v-permission="['admin','editor']"`)
     return false
@@ -32,7 +30,7 @@ export function permissionTreeToList(tree) {
   let list = []
   tree.forEach(permission => {
     const temp = Object.assign({}, permission)
-    if (permission.children && permission.children.length > 0) {
+    if (permission.children && permission.children instanceof Array && permission.children.length > 0) {
       list = list.concat(permissionTreeToList(permission.children))
     }
     delete temp.children
@@ -46,8 +44,12 @@ export function permissionTreeToList(tree) {
 export function initializePermission(roleid) {
   return getRolePermissions(roleid).then(response => {
     // 初始化用户权限
-    store.dispatch('setUserPermission', response.data.permission_list)
-    return response.data.permission_list
+    const permissionList = response.data.permission_list || []
+
+    // 公用权限
+    const items = permissionTreeToList(constantRouterMap).map((item) => item.path)
+    store.dispatch('setUserPermission', permissionList.concat(items))
+    return permissionList
   })
     .then((permissionList) => {
       // 初始化路由

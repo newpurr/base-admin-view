@@ -49,9 +49,8 @@ import { SyncMenuPermissionData, getMenuPermissionData, assignRolePermissions, g
 import { initializePermission } from '@/utils/permission'
 import path from 'path'
 import debounce from 'lodash/debounce'
-import { mapGetters } from 'vuex'
 import PermissionAdd from './add'
-
+import { getRolePermissions } from '@/api/rbac'
 export default {
   name: 'Permission',
   components: { PermissionAdd },
@@ -80,6 +79,7 @@ export default {
       syncMenu: [],
       //  按父级分组的按钮字典
       buttonMap: [],
+      permission: [],
       filterMenuPermText: '',
       dialog: {
         visible: false,
@@ -90,16 +90,21 @@ export default {
       loading: true
     }
   },
-  computed: {
-    ...mapGetters([
-      'permission'
-    ])
-  },
   watch: {
     'filterMenuPermText': debounce(function(val) {
       // tree筛选
       this.$refs.menuPermTreeRef.filter(val)
-    }, 600)
+    }, 600),
+    businessId: function(value) {
+      this.loading = true
+      getRolePermissions(value).then(response => {
+        this.permission = response.data.permission_list
+        this.loading = false
+      })
+    },
+    permission(newValue) {
+      this.$refs.menuPermTreeRef.setCheckedKeys(newValue)
+    }
   },
 
   created() {

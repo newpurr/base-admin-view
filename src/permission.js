@@ -1,19 +1,17 @@
 import router from './router'
 import store from '@/store'
 import { getToken } from '@/utils/authToken'
-
 // 进度条
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
-
 // 路由访问权限
-import { initializePermission, hasPermission } from '@/utils/permission'
+import { hasPermission, initializePermission } from '@/utils/permission'
 
 // 进度条配置
 NProgress.configure({ showSpinner: false })
 
 // 白名单
-const whiteList = ['/login', '/authredirect', '/401', '/dashboard', '/404']
+const whiteList = ['/login', '/authredirect', '/401', '/404']
 
 // 路由权限控制
 router.beforeEach((to, from, next) => {
@@ -22,6 +20,7 @@ router.beforeEach((to, from, next) => {
   if (!store.getters.permission ||
        store.getters.permission.length < 1 ||
        store.getters.addRouters.length < 1) {
+    // 根据登录信息拉取权限信息
     initializePermission(1).then((addRouters) => {
       // 动态添加可访问路由表
       router.addRoutes(addRouters)
@@ -53,6 +52,7 @@ router.beforeEach((to, from, next) => {
   if (to.matched && to.matched.length > 0) {
     toPath = to.matched[to.matched.length - 1].path
   }
+
   if (hasPermission(toPath)) {
     next()
   } else {

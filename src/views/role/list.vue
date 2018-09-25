@@ -1,7 +1,17 @@
 <template>
   <div class="app-container">
+    <div class="filter-container">
+      <el-input :placeholder="$t('role.name')" v-model="listQuery.name" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter"/>
+      <el-input v-model="temp" placeholder="已选中项目" style="width: 200px;" class="filter-item"/>
+      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">{{ $t('table.search') }}</el-button>
+      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">{{ $t('table.add') }}</el-button>
+    </div>
 
-    <el-table v-loading.body="listLoading" :data="list" border fit highlight-current-row style="width: 100%">
+    <el-table v-loading.body="listLoading" ref="roleListTable" :data="list" border fit style="width: 100%" @row-click="handleRowClick" @selection-change="handleSelectionChange">
+      <el-table-column
+        type="selection"
+        width="55"
+        label="ID"/>
       <el-table-column align="center" label="ID">
         <template slot-scope="scope">
           <span>{{ scope.row.id }}</span>
@@ -32,11 +42,10 @@
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="操作">
+      <el-table-column align="center" label="操作" fixed="right">
         <template slot-scope="scope">
-          <router-link :to="'/role/edit/'+scope.row.id">
-            <el-button type="primary" size="small" icon="el-icon-edit"/>
-          </router-link>
+          <el-button type="primary" size="small" icon="el-icon-edit" @click.stop="handleUpdate(scope.row.id)"/>
+          <el-button type="primary" size="small" icon="el-icon-circle-check" @click.stop="assignPermissions(scope.row.id)"/>
         </template>
       </el-table-column>
     </el-table>
@@ -44,7 +53,7 @@
     <div class="pagination-container">
       <el-pagination
         :current-page="listQuery.page"
-        :page-sizes="[10,20,30, 50]"
+        :page-sizes="[15,30,50]"
         :page-size="listQuery.limit"
         :total="total"
         background
@@ -52,15 +61,30 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"/>
     </div>
-
+    <el-collapse-transition>
+      <role-detail :is-edit="dialogForm.isEdit" :dialog-visible.sync="dialogForm.visible" :id="dialogForm.payload.id" @handleSuccess="getList"/>
+    </el-collapse-transition>
+    <el-collapse-transition>
+      <el-dialog :visible.sync="permissionDialogForm.visible" title="分配权限" width="30%">
+        <permission :business-type="permissionDialogForm.businessType" :business-id="permissionDialogForm.payload.id"/>
+      </el-dialog>
+    </el-collapse-transition>
+    <el-tooltip placement="top" content="去顶部">
+      <back-to-top :visibility-height="300" :back-position="50" transition-name="fade"/>
+    </el-tooltip>
   </div>
 </template>
 
 <script>
 import { getRoles } from '@/api/rbac'
+import RoleDetail from './components/RoleDetail'
+import BackToTop from '@/components/BackToTop'
+import Permission from '@/components/Permission'
+import waves from '@/directive/waves' // 水波纹指令
 
 export default {
   name: 'RoleList',
+  components: { RoleDetail, BackToTop, Permission },
   filters: {
     statusFilter(status) {
       const statusMap = {
@@ -71,21 +95,57 @@ export default {
       return statusMap[status]
     }
   },
+  directives: {
+    waves
+  },
   data() {
     return {
       list: null,
       total: 0,
       listLoading: true,
       listQuery: {
+        name: '',
         page: 1,
         limit: 10
-      }
+      },
+      dialogForm: {
+        visible: false,
+        isEdit: false,
+        payload: {
+          id: 0
+        }
+      },
+      permissionDialogForm: {
+        visible: false,
+        businessType: 1,
+        payload: {
+          id: 0
+        }
+      },
+      temp: ''
+    }
+  },
+  watch: {
+    dialogForm(val) {
+      this.getList()
     }
   },
   created() {
     this.getList()
   },
   methods: {
+    handleRowClick(row, event, column) {
+      this.$refs.roleListTable.toggleRowSelection(row)
+      console.log(row, event, column)
+      // this.$refs.roleListTable.selection.map(item => item.id).join(',')
+    },
+    handleSelectionChange(selection) {
+      this.temp = selection.map(item => item.id).join(',')
+    },
+    handleFilter() {
+      this.listQuery.page = 1
+      this.getList()
+    },
     getList() {
       this.listLoading = true
       getRoles(this.listQuery).then(response => {
@@ -93,6 +153,20 @@ export default {
         this.total = response.data.paginate.total
         this.listLoading = false
       })
+    },
+    assignPermissions(id) {
+      this.permissionDialogForm.payload.id = id
+      this.permissionDialogForm.visible = true
+    },
+    handleUpdate(id) {
+      this.dialogForm.payload.id = id
+      this.dialogForm.visible = true
+      this.dialogForm.isEdit = true
+    },
+    handleCreate() {
+      this.dialogForm.payload.id = 0
+      this.dialogForm.visible = true
+      this.dialogForm.isEdit = false
     },
     handleSizeChange(val) {
       this.listQuery.limit = val

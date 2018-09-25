@@ -48,6 +48,7 @@ export default {
     createArticle: '创建文章',
     editArticle: '编辑文章',
     articleList: '文章列表',
+    role: '角色管理',
     roleList: '角色列表',
     createRole: '添加角色',
     editRole: '编辑角色',
@@ -152,5 +153,8 @@ export default {
     close: '关闭',
     closeOthers: '关闭其它',
     closeAll: '关闭所有'
+  },
+  role: {
+    name: '角色名称'
   }
 }
