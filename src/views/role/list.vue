@@ -1,11 +1,28 @@
 <template>
   <div class="app-container">
-    <div class="filter-container">
+
+    <sticky class-name="box-card" style="margin-bottom:20px;">
+      <label class="el-form-item__label">通用功能:</label>
+      <el-tooltip class="item" effect="dark" content="添加角色" placement="top-start">
+        <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleCreate"/>
+      </el-tooltip>
+      <el-dropdown trigger="click">
+        <el-tooltip class="item" effect="dark" content="双击清空选中" placement="top-start">
+          <el-button plain>
+            已选中 <em style="color: red">1</em> 项目<i class="el-icon-caret-bottom el-icon--right"/>
+          </el-button>
+        </el-tooltip>
+        <el-dropdown-menu slot="dropdown">
+          <el-input v-model="temp" placeholder="已选中项目" class="filter-item"/>
+        </el-dropdown-menu>
+      </el-dropdown>
+    </sticky>
+
+    <sticky class-name="box-card" style="margin-bottom:20px;">
+      <label class="el-form-item__label">筛选项:</label>
       <el-input :placeholder="$t('role.name')" v-model="listQuery.name" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter"/>
-      <el-input v-model="temp" placeholder="已选中项目" style="width: 200px;" class="filter-item"/>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">{{ $t('table.search') }}</el-button>
-      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">{{ $t('table.add') }}</el-button>
-    </div>
+    </sticky>
 
     <el-table v-loading.body="listLoading" ref="roleListTable" :data="list" border fit style="width: 100%" @row-click="handleRowClick" @selection-change="handleSelectionChange">
       <el-table-column
@@ -81,10 +98,11 @@ import RoleDetail from './components/RoleDetail'
 import BackToTop from '@/components/BackToTop'
 import Permission from '@/components/Permission'
 import waves from '@/directive/waves' // 水波纹指令
+import Sticky from '@/components/Sticky'
 
 export default {
   name: 'RoleList',
-  components: { RoleDetail, BackToTop, Permission },
+  components: { RoleDetail, BackToTop, Permission, Sticky },
   filters: {
     statusFilter(status) {
       const statusMap = {
@@ -124,6 +142,8 @@ export default {
       },
       temp: ''
     }
+  },
+  computed: {
   },
   watch: {
     dialogForm(val) {
