@@ -45,6 +45,14 @@ export function updateRole(id, param) {
   return request.put(`http://admin.base.com/api/roles/${id}`, param)
 }
 
+export function batchDestoryRole(ids) {
+  return request.post(`http://admin.base.com/api/roles/batchDestory`, { params: { ids }})
+}
+
+export function batchEnableRole(ids) {
+  return request.post(`http://admin.base.com/api/roles/batchEnable`, { params: { ids }})
+}
+
 export function getRole(id) {
   return request.get(`http://admin.base.com/api/roles/${id}`)
 }

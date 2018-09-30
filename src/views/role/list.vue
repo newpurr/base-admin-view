@@ -2,30 +2,49 @@
   <div class="app-container">
 
     <sticky class-name="box-card" style="margin-bottom:20px;">
-      <label class="el-form-item__label">通用功能:</label>
-      <el-tooltip class="item" effect="dark" content="添加角色" placement="top-start">
-        <el-button class="filter-item" type="primary" icon="el-icon-edit" @click="handleCreate"/>
+      <label class="el-form-item__label" style="width: 80px;">通用功能:</label>
+      <el-tooltip class="item" effect="dark" content="添加角色" placement="top-start" >
+        <el-button class="filter-item" icon="el-icon-plus" size="mini" @click="handleCreate"/>
       </el-tooltip>
-      <el-dropdown trigger="click">
-        <el-tooltip class="item" effect="dark" content="双击清空选中" placement="top-start">
-          <el-button plain>
-            已选中 <em style="color: red">1</em> 项目<i class="el-icon-caret-bottom el-icon--right"/>
-          </el-button>
-        </el-tooltip>
-        <el-dropdown-menu slot="dropdown">
-          <el-input v-model="temp" placeholder="已选中项目" class="filter-item"/>
-        </el-dropdown-menu>
-      </el-dropdown>
+      <el-popover
+        placement="bottom-start"
+        width="800"
+        trigger="hover">
+        <div class="handler-container">
+          <el-button size="mini" @click="handlebatchEnable">启用</el-button>
+          <el-button size="mini" @click="handlebatchDestoryRole">禁用</el-button>
+        </div>
+        <div class="tool-container">
+          <el-input v-model="temp" placeholder="已选择项ID" readonly>
+            <el-button slot="append" type="primary" icon="document" size="mini" @click.native="handleClearSelection">清空</el-button>
+            <el-button v-clipboard:copy="temp" v-clipboard:success="clipboardSuccess" slot="append" type="primary" icon="document" size="mini">复制</el-button>
+          </el-input>
+        </div>
+        <el-button slot="reference" plain size="mini" @dblclick.native="handleClearSelection">
+          已选<em style="color: red;font-weight: bolder">{{ temp.split(',').filter((item) => !!item).length }}</em> 项 (双击清空) <i class="el-icon-caret-bottom el-icon--right"/>
+        </el-button>
+      </el-popover>
+      <el-button class="filter-item" icon="el-icon-refresh" size="mini" @click="getList"/>
     </sticky>
 
     <sticky class-name="box-card" style="margin-bottom:20px;">
-      <label class="el-form-item__label">筛选项:</label>
-      <el-input :placeholder="$t('role.name')" v-model="listQuery.name" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter"/>
-      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">{{ $t('table.search') }}</el-button>
+      <label class="el-form-item__label" style="width: 80px;">筛选项:</label>
+      <el-input :placeholder="$t('role.name')" v-model="listQuery.name" style="width: 200px;" class="filter-item" size="mini" @keyup.enter.native="handleFilter"/>
+      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" size="mini" @click="handleFilter">{{ $t('table.search') }}</el-button>
     </sticky>
 
-    <el-table v-loading.body="listLoading" ref="roleListTable" :data="list" border fit style="width: 100%" @row-click="handleRowClick" @selection-change="handleSelectionChange">
+    <el-table
+      v-loading.body="listLoading"
+      ref="roleListTable"
+      :data="list"
+      :row-key="getRowKeys"
+      border
+      fit
+      style="width: 100%"
+      @row-click="handleRowClick"
+      @selection-change="handleSelectionChange">
       <el-table-column
+        :reserve-selection="true"
         type="selection"
         width="55"
         label="ID"/>
@@ -59,10 +78,12 @@
         </template>
       </el-table-column>
 
-      <el-table-column align="center" label="操作" fixed="right">
+      <el-table-column align="center" label="操作">
         <template slot-scope="scope">
-          <el-button type="primary" size="small" icon="el-icon-edit" @click.stop="handleUpdate(scope.row.id)"/>
-          <el-button type="primary" size="small" icon="el-icon-circle-check" @click.stop="assignPermissions(scope.row.id)"/>
+          <span>
+            <el-button type="text" @click.stop="handleUpdate(scope.row.id)">编辑</el-button>
+            <el-button type="text" @click.stop="assignPermissions(scope.row.id)">权限</el-button>
+          </span>
         </template>
       </el-table-column>
     </el-table>
@@ -70,7 +91,7 @@
     <div class="pagination-container">
       <el-pagination
         :current-page="listQuery.page"
-        :page-sizes="[15,30,50]"
+        :page-sizes="[1,15,30,50]"
         :page-size="listQuery.limit"
         :total="total"
         background
@@ -93,12 +114,13 @@
 </template>
 
 <script>
-import { getRoles } from '@/api/rbac'
+import { getRoles, batchDestoryRole, batchEnableRole } from '@/api/rbac'
 import RoleDetail from './components/RoleDetail'
 import BackToTop from '@/components/BackToTop'
 import Permission from '@/components/Permission'
 import waves from '@/directive/waves' // 水波纹指令
 import Sticky from '@/components/Sticky'
+import clipboard from '@/directive/clipboard/index.js'
 
 export default {
   name: 'RoleList',
@@ -114,7 +136,7 @@ export default {
     }
   },
   directives: {
-    waves
+    waves, clipboard
   },
   data() {
     return {
@@ -124,7 +146,7 @@ export default {
       listQuery: {
         name: '',
         page: 1,
-        limit: 10
+        limit: 1
       },
       dialogForm: {
         visible: false,
@@ -132,6 +154,9 @@ export default {
         payload: {
           id: 0
         }
+      },
+      popover: {
+        visible: false
       },
       permissionDialogForm: {
         visible: false,
@@ -162,6 +187,16 @@ export default {
     handleSelectionChange(selection) {
       this.temp = selection.map(item => item.id).join(',')
     },
+    handleClearSelection() {
+      this.$refs.roleListTable.clearSelection()
+    },
+    clipboardSuccess() {
+      this.$message({
+        message: 'Copy successfully',
+        type: 'success',
+        duration: 1500
+      })
+    },
     handleFilter() {
       this.listQuery.page = 1
       this.getList()
@@ -188,6 +223,22 @@ export default {
       this.dialogForm.visible = true
       this.dialogForm.isEdit = false
     },
+    handlebatchDestoryRole() {
+      if (!this.temp) {
+        this.$message.error('请选择操作对象')
+      }
+      batchDestoryRole(this.temp).then((response) => {
+        console.log(response)
+      })
+    },
+    handlebatchEnable() {
+      if (!this.temp) {
+        this.$message.error('请选择操作对象')
+      }
+      batchEnableRole(this.temp).then((response) => {
+        console.log(response)
+      })
+    },
     handleSizeChange(val) {
       this.listQuery.limit = val
       this.getList()
@@ -195,6 +246,9 @@ export default {
     handleCurrentChange(val) {
       this.listQuery.page = val
       this.getList()
+    },
+    getRowKeys(row) {
+      return row.id
     }
   }
 }
@@ -209,4 +263,7 @@ export default {
   right: 15px;
   top: 10px;
 }
+    .handler-container {
+        margin-bottom: 20px;
+    }
 </style>

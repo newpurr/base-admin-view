@@ -63,7 +63,7 @@ export default {
     // 业务ID 分配类型为1时为角色ID 类型为2是为用户ID
     businessId: {
       type: Number,
-      default: 0
+      default: -1
     }
   },
   data() {
@@ -106,7 +106,6 @@ export default {
       this.$refs.menuPermTreeRef.setCheckedKeys(newValue)
     }
   },
-
   created() {
     this.init()
   },
@@ -119,6 +118,10 @@ export default {
 
       response = await getMenuPermissionData()
       this.syncMenu = response.data || []
+
+      getRolePermissions(this.businessId).then(response => {
+        this.permission = response.data.permission_list
+      })
 
       this.generateMenuTree()
 
