@@ -1,104 +1,107 @@
 <template>
   <div class="app-container">
+    <el-card class="box-card">
+      <div slot="header" class="clearfix">
+        <sticky class-name="box-card">
+          <el-tooltip class="item" effect="dark" content="添加角色" placement="top-start" >
+            <el-button class="filter-item" icon="el-icon-plus" size="mini" @click="handleCreate"/>
+          </el-tooltip>
+          <el-popover
+            placement="bottom-start"
+            width="800"
+            trigger="hover">
+            <div class="handler-container">
+              <el-button size="mini" @click="handlebatchEnable">启用</el-button>
+              <el-button size="mini" @click="handlebatchDestoryRole">禁用</el-button>
+            </div>
+            <div class="tool-container">
+              <el-input v-model="temp" placeholder="已选择项ID" readonly>
+                <el-button slot="append" type="primary" icon="document" size="mini" @click.native="handleClearSelection">清空</el-button>
+                <el-button v-clipboard:copy="temp" v-clipboard:success="clipboardSuccess" slot="append" type="primary" icon="document" size="mini">复制</el-button>
+              </el-input>
+            </div>
+            <el-button slot="reference" plain size="mini" @dblclick.native="handleClearSelection">
+              已选<em style="color: red;font-weight: bolder">{{ temp.split(',').filter((item) => !!item).length }}</em> 项 (双击清空) <i class="el-icon-caret-bottom el-icon--right"/>
+            </el-button>
+          </el-popover>
+          <el-button class="filter-item" icon="el-icon-refresh" size="mini" @click="getList"/>
+        </sticky>
+      </div>
+      <div>
+        <sticky class-name="box-card" style="margin-bottom:20px;">
+          <label class="el-form-item__label" style="width: 75px;font-size: 14px;line-height: 28px;">筛选项:</label>
+          <el-input :placeholder="$t('role.name')" v-model="listQuery.name" style="width: 200px;" class="filter-item" size="mini" @keyup.enter.native="handleFilter"/>
+          <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" size="mini" @click="handleFilter">{{ $t('table.search') }}</el-button>
+        </sticky>
 
-    <sticky class-name="box-card" style="margin-bottom:20px;">
-      <label class="el-form-item__label" style="width: 80px;">通用功能:</label>
-      <el-tooltip class="item" effect="dark" content="添加角色" placement="top-start" >
-        <el-button class="filter-item" icon="el-icon-plus" size="mini" @click="handleCreate"/>
-      </el-tooltip>
-      <el-popover
-        placement="bottom-start"
-        width="800"
-        trigger="hover">
-        <div class="handler-container">
-          <el-button size="mini" @click="handlebatchEnable">启用</el-button>
-          <el-button size="mini" @click="handlebatchDestoryRole">禁用</el-button>
+        <el-table
+          v-loading.body="listLoading"
+          ref="roleListTable"
+          :data="list"
+          :row-key="getRowKeys"
+          fit
+          style="width: 100%"
+          @row-click="handleRowClick"
+          @selection-change="handleSelectionChange">
+          <el-table-column
+            :reserve-selection="true"
+            type="selection"
+            width="40"
+            label="ID"/>
+          <el-table-column align="center" label="ID" width="55">
+            <template slot-scope="scope">
+              <span>{{ scope.row.id }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column align="center" label="名称">
+            <template slot-scope="scope">
+              <span>{{ scope.row.name }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column class-name="status-col" label="状态">
+            <template slot-scope="scope">
+              <el-tag :type="scope.row.enable | statusFilter">{{ scope.row.enable | enableStatusName }}</el-tag>
+            </template>
+          </el-table-column>
+
+          <el-table-column align="center" label="创建时间">
+            <template slot-scope="scope">
+              <span>{{ scope.row.created_at | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column align="center" label="更新时间">
+            <template slot-scope="scope">
+              <span>{{ scope.row.updated_at | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column align="center" label="操作">
+            <template slot-scope="scope">
+              <span>
+                <el-button type="text" @click.stop="handleUpdate(scope.row.id)">编辑</el-button>
+                <el-button type="text" @click.stop="assignPermissions(scope.row.id)">权限</el-button>
+              </span>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <div class="pagination-container">
+          <el-pagination
+            :current-page="listQuery.page"
+            :page-sizes="[1,15,30,50]"
+            :page-size="listQuery.limit"
+            :total="total"
+            background
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"/>
         </div>
-        <div class="tool-container">
-          <el-input v-model="temp" placeholder="已选择项ID" readonly>
-            <el-button slot="append" type="primary" icon="document" size="mini" @click.native="handleClearSelection">清空</el-button>
-            <el-button v-clipboard:copy="temp" v-clipboard:success="clipboardSuccess" slot="append" type="primary" icon="document" size="mini">复制</el-button>
-          </el-input>
-        </div>
-        <el-button slot="reference" plain size="mini" @dblclick.native="handleClearSelection">
-          已选<em style="color: red;font-weight: bolder">{{ temp.split(',').filter((item) => !!item).length }}</em> 项 (双击清空) <i class="el-icon-caret-bottom el-icon--right"/>
-        </el-button>
-      </el-popover>
-      <el-button class="filter-item" icon="el-icon-refresh" size="mini" @click="getList"/>
-    </sticky>
+      </div>
+    </el-card>
 
-    <sticky class-name="box-card" style="margin-bottom:20px;">
-      <label class="el-form-item__label" style="width: 80px;">筛选项:</label>
-      <el-input :placeholder="$t('role.name')" v-model="listQuery.name" style="width: 200px;" class="filter-item" size="mini" @keyup.enter.native="handleFilter"/>
-      <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" size="mini" @click="handleFilter">{{ $t('table.search') }}</el-button>
-    </sticky>
-
-    <el-table
-      v-loading.body="listLoading"
-      ref="roleListTable"
-      :data="list"
-      :row-key="getRowKeys"
-      border
-      fit
-      style="width: 100%"
-      @row-click="handleRowClick"
-      @selection-change="handleSelectionChange">
-      <el-table-column
-        :reserve-selection="true"
-        type="selection"
-        width="55"
-        label="ID"/>
-      <el-table-column align="center" label="ID">
-        <template slot-scope="scope">
-          <span>{{ scope.row.id }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column width="180px" align="center" label="名称">
-        <template slot-scope="scope">
-          <span>{{ scope.row.name }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column class-name="status-col" label="状态">
-        <template slot-scope="scope">
-          <el-tag :type="scope.row.enable | statusFilter">{{ scope.row.enable | enableStatusName }}</el-tag>
-        </template>
-      </el-table-column>
-
-      <el-table-column width="180px" align="center" label="创建时间">
-        <template slot-scope="scope">
-          <span>{{ scope.row.created_at | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column width="180px" align="center" label="更新时间">
-        <template slot-scope="scope">
-          <span>{{ scope.row.updated_at | parseTime('{y}-{m}-{d} {h}:{i}') }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column align="center" label="操作">
-        <template slot-scope="scope">
-          <span>
-            <el-button type="text" @click.stop="handleUpdate(scope.row.id)">编辑</el-button>
-            <el-button type="text" @click.stop="assignPermissions(scope.row.id)">权限</el-button>
-          </span>
-        </template>
-      </el-table-column>
-    </el-table>
-
-    <div class="pagination-container">
-      <el-pagination
-        :current-page="listQuery.page"
-        :page-sizes="[1,15,30,50]"
-        :page-size="listQuery.limit"
-        :total="total"
-        background
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"/>
-    </div>
     <el-collapse-transition>
       <role-detail :is-edit="dialogForm.isEdit" :dialog-visible.sync="dialogForm.visible" :id="dialogForm.payload.id" @handleSuccess="getList"/>
     </el-collapse-transition>
@@ -120,7 +123,7 @@ import BackToTop from '@/components/BackToTop'
 import Permission from '@/components/Permission'
 import waves from '@/directive/waves' // 水波纹指令
 import Sticky from '@/components/Sticky'
-import clipboard from '@/directive/clipboard/index.js'
+import clipboard from '@/directive/clipboard/index'
 
 export default {
   name: 'RoleList',
@@ -228,7 +231,11 @@ export default {
         this.$message.error('请选择操作对象')
       }
       batchDestoryRole(this.temp).then((response) => {
-        console.log(response)
+        this.$message({
+          message: '禁用成功',
+          type: 'success',
+          duration: 1500
+        })
       })
     },
     handlebatchEnable() {
@@ -236,7 +243,11 @@ export default {
         this.$message.error('请选择操作对象')
       }
       batchEnableRole(this.temp).then((response) => {
-        console.log(response)
+        this.$message({
+          message: '启用成功',
+          type: 'success',
+          duration: 1500
+        })
       })
     },
     handleSizeChange(val) {
