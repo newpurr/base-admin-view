@@ -40,5 +40,23 @@ export default [
       }
     ]
   },
+  {
+    path: '/upload',
+    component: Layout,
+    redirect: '/upload/demo',
+    name: 'Example',
+    meta: {
+      title: 'upload',
+      icon: 'example'
+    },
+    children: [
+      {
+        path: 'demo',
+        component: () => import('@/views/uploader/avatarUpload'),
+        name: 'uploadDemo',
+        meta: { title: 'uploadDemo', icon: 'list' }
+      }
+    ]
+  },
   { path: '*', redirect: '/404', hidden: true }
 ]

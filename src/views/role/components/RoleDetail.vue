@@ -65,7 +65,7 @@ export default {
         this.loading = true
         getRole(val).then((response) => {
           this.loading = false
-          this.formData = response.data
+          this.formData = response.data.payload
         })
       }
     }

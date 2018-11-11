@@ -94,7 +94,6 @@
             :page-sizes="[1,15,30,50]"
             :page-size="listQuery.limit"
             :total="total"
-            background
             layout="total, sizes, prev, pager, next, jumper"
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"/>
@@ -207,8 +206,9 @@ export default {
     getList() {
       this.listLoading = true
       getRoles(this.listQuery).then(response => {
-        this.list = response.data.items
-        this.total = response.data.paginate.total
+        const payload = response.data.payload
+        this.list = payload.paginate.items
+        this.total = payload.paginate.total
         this.listLoading = false
       })
     },
@@ -229,8 +229,10 @@ export default {
     handlebatchDestoryRole() {
       if (!this.temp) {
         this.$message.error('请选择操作对象')
+        return
       }
       batchDestoryRole(this.temp).then((response) => {
+        this.getList()
         this.$message({
           message: '禁用成功',
           type: 'success',
@@ -241,8 +243,10 @@ export default {
     handlebatchEnable() {
       if (!this.temp) {
         this.$message.error('请选择操作对象')
+        return
       }
       batchEnableRole(this.temp).then((response) => {
+        this.getList()
         this.$message({
           message: '启用成功',
           type: 'success',
