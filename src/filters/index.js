@@ -43,8 +43,9 @@ export function toThousandslsFilter(num) {
 
 export function enableStatusName(enable) {
   const nameMap = {
-    0: '禁用',
-    1: '启用'
+    0: '待启用',
+    1: '启用',
+    2: '禁用'
   }
   return nameMap[enable] ? nameMap[enable] : '未知'
 }

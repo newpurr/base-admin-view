@@ -78,13 +78,17 @@ export default {
 
         const promise = this.formData.id > 0 ? updateRole(this.formData.id, this.formData) : createRole(this.formData)
 
-        promise.then((response) => {
-          this.visible = false
-          this.$message({
-            type: 'success',
-            message: '操作成功!'
-          })
-          this.$emit('handleSuccess')
+        promise.then(({ data: response }) => {
+          if (response.code === '200') {
+            this.visible = false
+            this.$message({
+              type: 'success',
+              message: '操作成功!'
+            })
+            this.$emit('handleSuccess')
+            return
+          }
+          this.$message.error(response.message)
         })
       })
     }

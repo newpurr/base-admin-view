@@ -62,7 +62,7 @@
 
           <el-table-column class-name="status-col" label="状态">
             <template slot-scope="scope">
-              <el-tag :type="scope.row.enable | statusFilter">{{ scope.row.enable | enableStatusName }}</el-tag>
+              <el-tag :type="scope.row.state | statusFilter">{{ scope.row.state | enableStatusName }}</el-tag>
             </template>
           </el-table-column>
 
@@ -255,6 +255,7 @@ export default {
       })
     },
     handleSizeChange(val) {
+      this.listQuery.page = 1
       this.listQuery.limit = val
       this.getList()
     },
