@@ -61,7 +61,8 @@ export function initializePermission(roleid) {
 
 // 判断是否有访问权限
 export function hasPermission(toPath) {
-  return store.getters.permission.indexOf(toPath) >= 0
+  return true
+  // return store.getters.permission.indexOf(toPath) >= 0
 }
 
 // 递归标记拥有的路由访问权限
@@ -72,7 +73,8 @@ function markNoAuthRouter(routers, permissionList, parentRouter) {
   }).map(item => {
     const temp = Object.assign({}, item)
     temp.absolute_path = path.join('/', parentRouter.path, temp.path)
-    temp.hasAuth = permissionList.includes(temp.absolute_path)
+    // temp.hasAuth = permissionList.includes(temp.absolute_path)
+    temp.hasAuth = true
 
     if (temp.children && temp.children.length > 0) {
       temp.children = markNoAuthRouter(temp.children, permissionList, temp)

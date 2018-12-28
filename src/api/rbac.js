@@ -18,15 +18,15 @@ export function deletePermission(id) {
 }
 
 export function assignRolePermissions(roleid, permissionList) {
-  return request.post(`http://admin.base.com/api/role/${roleid}/permission`, { 'permissionList': permissionList })
+  return request.post(`http://admin.base.com/api/roles/${roleid}/permission`, { 'permissionList': permissionList })
 }
 
 export function getRolePermissions(roleid) {
-  return request.get(`http://admin.base.com/api/role/${roleid}/permission`)
+  return request.get(`http://admin.base.com/api/roles/${roleid}/permission`)
 }
 
 export function getRoleButtons(roleid) {
-  return request.get(`http://admin.base.com/api/role/${roleid}/button`)
+  return request.get(`http://admin.base.com/api/roles/${roleid}/button`)
 }
 
 export function getButtons() {

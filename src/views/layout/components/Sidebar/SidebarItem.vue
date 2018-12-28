@@ -65,10 +65,7 @@ export default {
           return true
         }
       })
-      if (showingChildren.length === 1) {
-        return true
-      }
-      return false
+      return showingChildren.length === 1
     },
     resolvePath(...paths) {
       return path.resolve(this.basePath, ...paths)

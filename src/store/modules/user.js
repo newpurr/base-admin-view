@@ -61,9 +61,13 @@ const user = {
       return new Promise((resolve, reject) => {
         loginByUsername(username, userInfo.password).then(response => {
           const data = response.data
-          commit('SET_TOKEN', data.token)
-          setToken(response.data.token)
-          resolve(response)
+          if (data.code === '200') {
+            commit('SET_TOKEN', data.payload.access_token)
+            setToken(data.payload.access_token)
+            resolve(response)
+          } else {
+            reject(data.message)
+          }
         }).catch(error => {
           reject(error)
         })
@@ -94,20 +98,6 @@ const user = {
         })
       })
     },
-
-    // 第三方验证登录
-    // LoginByThirdparty({ commit, state }, code) {
-    //   return new Promise((resolve, reject) => {
-    //     commit('SET_CODE', code)
-    //     loginByThirdparty(state.status, state.email, state.code).then(response => {
-    //       commit('SET_TOKEN', response.data.token)
-    //       setToken(response.data.token)
-    //       resolve()
-    //     }).catch(error => {
-    //       reject(error)
-    //     })
-    //   })
-    // },
 
     // 登出
     LogOut({ commit, state }) {

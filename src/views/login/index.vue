@@ -89,8 +89,8 @@ export default {
     }
     return {
       loginForm: {
-        username: 'admin',
-        password: '1111111'
+        username: 'luotao',
+        password: '123456'
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -120,27 +120,26 @@ export default {
         if (!valid) {
           console.log('error submit!!')
           return false
-        } else {
-          this.loading = true
-          this.$store.dispatch('LoginByUsername', this.loginForm).then(() => {
-            // 初始化用户权限
-            getRolePermissions(1).then(response => {
-              return this.$store.dispatch('setUserPermission', response.data.permission_list)
-            })
-              // 初始化vue异步route
-              .then(() => {
-                console.log(this.$store.getters.addRouters)
-                // router.addRoutes(this.$store.getters.addRouters) // 动态添加可访问路由表
-              })
-              // 结束
-              .then(() => {
-                this.loading = false
-                this.$router.push({ path: '/' })
-              })
-          }).catch(() => {
-            this.loading = false
-          })
         }
+        this.loading = true
+        this.$store.dispatch('LoginByUsername', this.loginForm).then(() => {
+          // 初始化用户权限
+          getRolePermissions(1).then(response => {
+            return this.$store.dispatch('setUserPermission', response.data.permission_list)
+          })
+            // 初始化vue异步route
+            .then(() => {
+              console.log(this.$store.getters.addRouters)
+              // router.addRoutes(this.$store.getters.addRouters) // 动态添加可访问路由表
+            })
+            // 结束
+            .then(() => {
+              this.loading = false
+              this.$router.push({ path: '/' })
+            })
+        }).catch(() => {
+          this.loading = false
+        })
       })
     },
     afterQRScan() {
