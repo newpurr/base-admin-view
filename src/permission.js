@@ -17,6 +17,18 @@ const whiteList = ['/login', '/authredirect', '/401', '/404']
 router.beforeEach((to, from, next) => {
   NProgress.start()
 
+  if (whiteList.indexOf(to.path) !== -1) {
+    next()
+    NProgress.done()
+    return
+  }
+
+  if (!getToken()) {
+    next(`/login?redirect=${to.path}`)
+    NProgress.done()
+    return
+  }
+
   if (!store.getters.permission ||
        store.getters.permission.length < 1 ||
        store.getters.addRouters.length < 1) {
@@ -27,18 +39,6 @@ router.beforeEach((to, from, next) => {
       next({ ...to, replace: true })
       NProgress.done()
     })
-    return
-  }
-
-  if (whiteList.indexOf(to.path) !== -1) {
-    next()
-    NProgress.done()
-    return
-  }
-
-  if (!getToken()) {
-    next(`/login?redirect=${to.path}`)
-    NProgress.done()
     return
   }
 

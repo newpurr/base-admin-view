@@ -62,8 +62,9 @@ const user = {
         loginByUsername(username, userInfo.password).then(response => {
           const data = response.data
           if (data.code === '200') {
-            commit('SET_TOKEN', data.payload.access_token)
-            setToken(data.payload.access_token)
+            data.payload.expired = Math.ceil(new Date().getTime() / 1000) + data.payload.expires_in
+            commit('SET_TOKEN', data.payload)
+            setToken(data.payload)
             resolve(response)
           } else {
             reject(data.message)
@@ -77,7 +78,7 @@ const user = {
     // 获取用户信息
     GetUserInfo({ commit, state }) {
       return new Promise((resolve, reject) => {
-        getUserInfo(state.token).then(response => {
+        getUserInfo().then(response => {
           if (!response.data) { // 由于mockjs 不支持自定义状态码只能这样hack
             reject('error')
           }

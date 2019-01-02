@@ -31,7 +31,6 @@ export default {
   },
   methods: {
     hasPermission(route) {
-      return true
       return typeof route.hasAuth === 'undefined' || route.hasAuth
     }
   }
